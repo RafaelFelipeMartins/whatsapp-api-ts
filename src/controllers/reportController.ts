@@ -1,44 +1,47 @@
 import { Request, Response } from "express";
-import db from "../database/connection.js";
+import db from "../database/connection";
+import {generateEnvironmentalReport} from "../services/openaiService";
 
 // POST /reports — criar relatório
 export const createReport = async (req: Request, res: Response) => {
     try {
         const {
-            school_id,
-            description,
-            acoes_recomendadas,
             total_denuncias,
             ia_approved,
-            recorrencia_regiao,
-            locais_reincidentes,
             bairros_criticos,
+            locais_reincidentes,
             engajamento_colaborativo,
             alunos_engajados,
             parcerias_ativas,
-            premio_escola,
-            image_ids, // array de IDs de imagens
+            image_ids
         } = req.body;
 
-        // cria o relatório
+        // chama a IA para gerar descrição e recomendações
+        const aiResult = await generateEnvironmentalReport({
+            total_denuncias,
+            ia_approved,
+            bairros_criticos,
+            locais_reincidentes,
+            engajamento_colaborativo,
+            alunos_engajados,
+            parcerias_ativas,
+        });
+
         const [report] = await db("reports")
             .insert({
-                school_id,
-                description,
-                acoes_recomendadas,
+                description: aiResult.description,
+                acoes_recomendadas: aiResult.acoes_recomendadas,
                 total_denuncias,
                 ia_approved,
-                recorrencia_regiao,
-                locais_reincidentes,
-                bairros_criticos,
+                bairros_criticos: JSON.stringify(bairros_criticos || []),
+                locais_reincidentes: JSON.stringify(locais_reincidentes || []),
                 engajamento_colaborativo,
                 alunos_engajados,
                 parcerias_ativas,
-                premio_escola,
             })
             .returning("*");
 
-        // vincula imagens (se vierem IDs)
+        // vincula imagens se houver
         if (Array.isArray(image_ids) && image_ids.length > 0) {
             const relations = image_ids.map((image_id: string) => ({
                 report_id: report.id,
@@ -47,13 +50,12 @@ export const createReport = async (req: Request, res: Response) => {
             await db("report_images").insert(relations);
         }
 
-        return res.status(201).json(report);
+        res.status(201).json(report);
     } catch (error: any) {
-        console.error("❌ Erro ao criar relatório:", error);
-        return res.status(500).json({ message: "Erro ao criar relatório", error: error?.message });
+        console.error("Erro ao gerar relatório IA:", error);
+        res.status(500).json({ message: "Erro ao gerar relatório com IA", error: error?.message });
     }
 };
-
 // GET /reports — listar relatórios
 export const listReports = async (_req: Request, res: Response) => {
     try {

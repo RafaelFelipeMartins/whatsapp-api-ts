@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import db from "../database/connection.js";
+import db from "../database/connection";
 
 // POST /users — criar
 export const createUser = async (req: Request, res: Response) => {

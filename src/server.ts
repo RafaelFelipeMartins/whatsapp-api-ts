@@ -20,7 +20,7 @@ app.get('/health', (_req: Request, res: Response) => {
     });
 });
 
-// initWhatsApp();
+initWhatsApp();
 
 app.use("/users", userRoutes);
 app.use("/images", imagesRouter);

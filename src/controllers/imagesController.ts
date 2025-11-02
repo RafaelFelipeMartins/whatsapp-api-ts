@@ -6,7 +6,6 @@ import axios from "axios";
 export const createImage = async (req: Request, res: Response) => {
     try {
         const {
-            user_id,
             phone,
             imageBase64,
             endereco,
@@ -16,7 +15,8 @@ export const createImage = async (req: Request, res: Response) => {
             confidence,
         } = req.body;
 
-        if (!user_id || !phone || !imageBase64) {
+        console.log(phone, imageBase64);
+        if (!phone || !imageBase64) {
             return res
                 .status(400)
                 .json({ message: "Campos obrigatórios: user_id, phone e imageBase64" });
@@ -37,7 +37,6 @@ export const createImage = async (req: Request, res: Response) => {
 
         const [image] = await db("images")
             .insert({
-                user_id,
                 phone,
                 image_base64: imageBase64,
                 endereco,

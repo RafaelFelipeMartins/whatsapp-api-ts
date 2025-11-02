@@ -6,19 +6,19 @@ export async function up(knex: Knex): Promise<void> {
 
     await knex.schema.createTable("images", (table) => {
         table.uuid("id").primary().defaultTo(knex.raw("gen_random_uuid()"));
-        table.uuid("user_id").notNullable()
-            .references("id").inTable("users").onDelete("CASCADE");
+        //table.uuid("user_id").notNullable()
+        //    .references("id").inTable("users").onDelete("CASCADE");
         table.string("phone").notNullable();
         table.text("image_base64").notNullable();
         table.string("endereco");
         table.decimal("latitude", 10, 7);
         table.decimal("longitude", 10, 7);
-        table.enum("status", ["pending", "validated", "discarded"], {
+        /* table.enum("status", ["pending", "validated", "discarded"], {
             useNative: true,
             enumName: "image_status",
-        }).defaultTo("pending");
+        }).defaultTo("pending"); */
         table.string("classification");
-        table.decimal("confidence", 5, 2);
+        //table.decimal("confidence", 5, 2);
         table.timestamp("created_at").defaultTo(knex.fn.now());
     });
 }

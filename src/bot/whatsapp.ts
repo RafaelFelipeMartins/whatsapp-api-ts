@@ -193,23 +193,21 @@ export function initWhatsApp() {
               : msg.body.trim();
 
           const payload = {
-            id: Math.random() * 1000000,
-            userId: from,
-            imageData: state.imageData,
+            phone: from,
+            imageBase64: state.imagePath,
             description: '',
             latitude: msg.location?.latitude,
             longitude: msg.location?.longitude,
             classification: '',
-            confidence: ''
           };
 
-              axios.post(`http://${host}:${port}/images/`, payload)
-                .then(response => {
-              console.log('Resposta:', response.data);
-            })
-            .catch(error => {
-              console.error('Erro na requisição:', error);
-            });
+          axios.post(`http://${host}:${port}/images/`, payload)
+              .then(response => {
+            console.log('Resposta:', response.data);
+          })
+          .catch(error => {
+            console.error('Erro na requisição:', error);
+          });
 
           if (state.imagePath) {
             fs.unlink(state.imagePath, (err) => {

@@ -6,8 +6,12 @@ import qrcode from "qrcode-terminal";
 import fs from "fs";
 import path from "path";
 import OpenAI from "openai";
+import axios from "axios";
 
 dotenv.config();
+
+const host = process.env.HOST || 'localhost';  // Default é 'localhost'
+const port = process.env.PORT || 3000;        // Default é 3000
 
 const allowedNumbers = [
   '554197309009@c.us',
@@ -108,6 +112,7 @@ export function initWhatsApp() {
     // 🔄 Estado de conversa temporário
   interface UserState {
     stage: "intro" | "image" | "confirm" | "location" | "done";
+    imageData?: string;
     imagePath?: string;
     description?: string;
   }
@@ -160,6 +165,7 @@ export function initWhatsApp() {
             response = "🧹 Não identifiquei lixo na imagem. Tente outra foto, por favor.";
           } else {
             state.stage = "confirm";
+            state.imageData = media.data;
             state.imagePath = imagePath;
             state.description = analysis;
             response = `📸 Análise da imagem:\n\n${analysis}\n\n${confirmationQuestion}`;
@@ -186,14 +192,34 @@ export function initWhatsApp() {
               ? `Latitude: ${msg.location?.latitude}, Longitude: ${msg.location?.longitude}`
               : msg.body.trim();
 
-          const reportContent = `
-            Descrição: ${state.description}
-            Localização: ${locationData}
-            Imagem: ${state.imagePath}
-            Data: ${new Date().toLocaleString()}
-          `.trim();
+          const payload = {
+            id: Math.random() * 1000000,
+            userId: from,
+            imageData: state.imageData,
+            description: '',
+            latitude: msg.location?.latitude,
+            longitude: msg.location?.longitude,
+            classification: '',
+            confidence: ''
+          };
 
-          saveFile("./reports", `report_${Date.now()}.txt`, reportContent, "utf-8");
+          axios.post(`http://${host}:${port}images/`, payload)
+            .then(response => {
+              console.log('Resposta:', response.data);
+            })
+            .catch(error => {
+              console.error('Erro na requisição:', error);
+            });
+
+          if (state.imagePath) {
+            fs.unlink(state.imagePath, (err) => {
+              if (err) {
+                console.error('Error deleting file:', err);
+                return;
+              }
+              console.log('File deleted successfully');
+            });
+          }
 
           response = thankYouMessage;
           state.stage = "done";

@@ -203,8 +203,8 @@ export function initWhatsApp() {
             confidence: ''
           };
 
-          axios.post(`http://${host}:${port}images/`, payload)
-            .then(response => {
+              axios.post(`http://${host}:${port}/images/`, payload)
+                .then(response => {
               console.log('Resposta:', response.data);
             })
             .catch(error => {

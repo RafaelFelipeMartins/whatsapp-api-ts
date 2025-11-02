@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import db from "../database/connection.js";
+import db from "../database/connection";
 import axios from "axios";
 
 // POST /images — criar imagem

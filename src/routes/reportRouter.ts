@@ -5,7 +5,7 @@ import {
     getReport,
     updateReport,
     deleteReport,
-} from "../controllers/reportController.js";
+} from "../controllers/reportController";
 
 const router = Router();
 

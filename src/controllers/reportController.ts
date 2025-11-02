@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import db from "../database/connection.js";
+import db from "../database/connection";
 
 // POST /reports — criar relatório
 export const createReport = async (req: Request, res: Response) => {

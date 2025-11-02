@@ -1,5 +1,5 @@
 import express, { Request, Response } from 'express';
-import { initWhatsApp } from './bot/whatsapp';
+//import { initWhatsApp } from './bot/whatsapp';
 import userRoutes from "./routes/userRoutes";
 import imagesRouter from "./routes/imagesRouter";
 import dotenv from "dotenv";
@@ -20,7 +20,7 @@ app.get('/health', (_req: Request, res: Response) => {
     });
 });
 
-initWhatsApp();
+//initWhatsApp();
 
 app.use("/users", userRoutes);
 app.use("/images", imagesRouter);

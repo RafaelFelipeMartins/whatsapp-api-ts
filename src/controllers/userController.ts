@@ -1,48 +1,89 @@
 import { Request, Response } from "express";
-import db from "../database/connection";
+import db from "../database/connection.js";
 
-// POST /users — Realizar Cadastro
+// POST /users — criar
 export const createUser = async (req: Request, res: Response) => {
-  const { nome, email } = req.body;
+    const { nome, email, phone, role } = req.body;
 
-  if (!nome || !email)
-    return res.status(400).json({ message: "Nome e email são obrigatórios" });
+    if (!nome || !email) {
+        return res.status(400).json({ message: "Nome e email são obrigatórios" });
+    }
 
-  try {
-    const [user] = await db("users").insert({ nome, email }).returning("*");
-    return res.status(201).json(user);
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao cadastrar usuário", error });
-  }
+    try {
+        const payload: any = { nome, email };
+        if (phone) payload.phone = phone;
+        if (role)  payload.role  = role; // 'user' | 'gestor' | 'primary'
+
+        const [user] = await db("users").insert(payload).returning("*");
+        return res.status(201).json(user);
+    } catch (error: any) {
+        // conflito de único (email/phone duplicado)
+        if (error?.code === "23505") {
+            return res.status(409).json({ message: "Email ou telefone já cadastrado" });
+        }
+        return res.status(500).json({ message: "Erro ao cadastrar usuário", error: error?.message });
+    }
 };
 
-// PUT /users/:id — Editar Cadastro
+// PUT /users/:id — editar (parcial)
 export const updateUser = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const { nome, email } = req.body;
+    const { id } = req.params;
+    const { nome, email, phone, role } = req.body;
 
-  try {
-    const updated = await db("users").where({ id }).update({ nome, email }).returning("*");
+    try {
+        const data: any = {};
+        if (nome !== undefined)  data.nome  = nome;
+        if (email !== undefined) data.email = email;
+        if (phone !== undefined) data.phone = phone;
+        if (role  !== undefined) data.role  = role;
 
-    if (updated.length === 0)
-      return res.status(404).json({ message: "Usuário não encontrado" });
+        if (Object.keys(data).length === 0) {
+            return res.status(400).json({ message: "Informe algum campo para atualizar" });
+        }
 
-    return res.json(updated[0]);
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao atualizar usuário", error });
-  }
+        data.updated_at = db.fn.now();
+
+        const updated = await db("users").where({ id }).update(data).returning("*");
+
+        if (!updated || updated.length === 0) {
+            return res.status(404).json({ message: "Usuário não encontrado" });
+        }
+
+        return res.json(updated[0]);
+    } catch (error: any) {
+        if (error?.code === "23505") {
+            return res.status(409).json({ message: "Email ou telefone já cadastrado" });
+        }
+        return res.status(500).json({ message: "Erro ao atualizar usuário", error: error?.message });
+    }
 };
 
+// DELETE /users/:id — excluir
 export const deleteUser = async (req: Request, res: Response) => {
-  try {
+    try {
+        const { id } = req.params;
+        const deleted = await db("users").where({ id }).del();
+
+        if (!deleted) {
+            return res.status(404).json({ message: "Usuário não encontrado" });
+        }
+
+        return res.json({ message: "Usuário deletado com sucesso" });
+    } catch (error: any) {
+        return res.status(500).json({ message: "Erro ao deletar usuário", error: error?.message });
+    }
+};
+
+// GET /users — listar
+export const listUsers = async (_req: Request, res: Response) => {
+    const items = await db("users").select("*").orderBy("created_at", "desc");
+    return res.json(items);
+};
+
+// GET /users/:id — obter
+export const getUser = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const deleted = await db("users").where({ id }).del();
-
-    if (!deleted)
-      return res.status(404).json({ message: "Captura não encontrada" });
-
-    return res.json({ message: "Captura deletada com sucesso" });
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao deletar captura", error });
-  }
+    const user = await db("users").where({ id }).first();
+    if (!user) return res.status(404).json({ message: "Usuário não encontrado" });
+    return res.json(user);
 };

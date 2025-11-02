@@ -1,4 +1,4 @@
-import { Client, LocalAuth, Message } from 'whatsapp-web.js';
+import {Client, LocalAuth, Message} from 'whatsapp-web.js';
 // @ts-ignore
 import qrcode from 'qrcode-terminal';
 
@@ -22,8 +22,7 @@ export function initWhatsApp(): void {
 
     if (regexCalc.test(input)) {
       try {
-        const result = input;
-        await msg.reply(`🧮 Resultado: ${result}`);
+          await msg.reply(`🧮 Resultado: ${input}`);
       } catch {
         await msg.reply('❌ Input inválido');
       }

@@ -4,6 +4,7 @@ import userRoutes from "./routes/userRoutes";
 import imagesRouter from "./routes/imagesRouter";
 import dotenv from "dotenv";
 import cors from "cors";
+import reportRouter from "./routes/reportRouter";
 
 dotenv.config();
 const app = express();
@@ -21,8 +22,9 @@ app.get('/health', (_req: Request, res: Response) => {
 
 initWhatsApp();
 
-app.use("/user", userRoutes);
+app.use("/users", userRoutes);
 app.use("/images", imagesRouter);
+app.use("/reports", reportRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

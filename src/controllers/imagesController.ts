@@ -1,7 +1,8 @@
 import { Request, Response } from "express";
 import db from "../database/connection";
+import axios from "axios";
 
-// GET /images/:id → retorna todas as imagens de um cliente
+// GET /images/:id c retorna todas as imagens de um cliente
 export const getImages = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -14,26 +15,67 @@ export const getImages = async (req: Request, res: Response) => {
 
 // POST /images → cria uma nova captura
 export const postImages = async (req: Request, res: Response) => {
-  try {
-    const { phone, imageBase64 } = req.body;
+    try {
+        const { phone, imageBase64, endereco, latitude, longitude } = req.body;
 
-    if (!phone || !imageBase64) {
-      return res
-        .status(400)
-        .json({ message: "Telefone e imagem são obrigatórios" });
+        // Campos obrigatórios mínimos
+        if (!phone || !imageBase64) {
+            return res
+                .status(400)
+                .json({ message: "Telefone e imagem são obrigatórios" });
+        }
+
+        let lat = latitude;
+        let lon = longitude;
+        let address = endereco;
+
+        // Se tiver endereço mas não coordenadas → tenta geocodificar
+        if (endereco && (!latitude || !longitude)) {
+            try {
+                const geoRes = await axios.get("https://nominatim.openstreetmap.org/search", {
+                    params: { q: endereco, format: "json", limit: 1 },
+                });
+                if (geoRes.data.length > 0) {
+                    lat = geoRes.data[0].lat;
+                    lon = geoRes.data[0].lon;
+                }
+            } catch (geoError) {
+                console.warn("⚠️ Falha ao converter endereço em coordenadas:", geoError);
+            }
+        }
+
+        // Se tiver coordenadas mas não endereço → tenta buscar endereço reverso
+        if ((!endereco || endereco.trim() === "") && latitude && longitude) {
+            try {
+                const revRes = await axios.get("https://nominatim.openstreetmap.org/reverse", {
+                    params: {
+                        lat: latitude,
+                        lon: longitude,
+                        format: "json",
+                    },
+                });
+                address = revRes.data.display_name || null;
+            } catch (revError) {
+                console.warn("⚠️ Falha ao converter coordenadas em endereço:", revError);
+            }
+        }
+
+        // Inserção no banco
+        const [newImage] = await db("images")
+            .insert({
+                phone,
+                image_base64: imageBase64,
+                endereco: address,
+                latitude: lat,
+                longitude: lon,
+            })
+            .returning("*");
+
+        return res.status(201).json(newImage);
+    } catch (error) {
+        console.error("❌ Erro ao salvar captura:", error);
+        return res.status(500).json({ message: "Erro ao salvar captura", error });
     }
-
-    const [newImage] = await db("images")
-      .insert({
-        phone,
-        image_base64: imageBase64,
-      })
-      .returning("*");
-
-    return res.status(201).json(newImage);
-  } catch (error) {
-    return res.status(500).json({ message: "Erro ao salvar captura", error });
-  }
 };
 
 

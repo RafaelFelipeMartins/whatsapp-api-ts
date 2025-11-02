@@ -1,9 +1,9 @@
 import express from 'express';
-import { getImages, postImages } from '../controllers/imagesController';
+import {deleteImage, getImages, postImages} from '../controllers/imagesController';
 
 const router = express.Router();
 
-router.get("/images/:id", getImages);
-router.post("/images", postImages);
-
+router.get("/:id", getImages);
+router.post("", postImages);
+router.delete("/:id", deleteImage);
 export default router;

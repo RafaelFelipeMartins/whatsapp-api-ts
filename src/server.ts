@@ -19,10 +19,10 @@ app.get('/health', (_req: Request, res: Response) => {
     });
 });
 
-// initWhatsApp();
+initWhatsApp();
 
 app.use("/user", userRoutes);
-app.use("/image", imagesRouter);
+app.use("/images", imagesRouter);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

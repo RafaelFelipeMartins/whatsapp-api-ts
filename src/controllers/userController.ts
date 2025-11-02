@@ -32,3 +32,17 @@ export const updateUser = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Erro ao atualizar usuário", error });
   }
 };
+
+export const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const deleted = await db("users").where({ id }).del();
+
+    if (!deleted)
+      return res.status(404).json({ message: "Captura não encontrada" });
+
+    return res.json({ message: "Captura deletada com sucesso" });
+  } catch (error) {
+    return res.status(500).json({ message: "Erro ao deletar captura", error });
+  }
+};
